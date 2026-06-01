@@ -1,0 +1,614 @@
+---
+- name: Deploy and Configure Nginx Landing Page
+  hosts: web
+  become: yes
+  tasks:
+    - name: Update apt cache and upgrade packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+        cache_valid_time: 3600
+
+    - name: Install Nginx web server
+      apt:
+        name: nginx
+        state: present
+
+    - name: Ensure Nginx is running and enabled at boot
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Configure directory permissions for the web root
+      file:
+        path: /var/www/html
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+
+    - name: Deploy custom GitOps cloud landing page
+      copy:
+        dest: /var/www/html/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'
+        content: |
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>GitOps Cloud Pipeline Portal</title>
+              <!-- Google Fonts -->
+              <link rel="preconnect" href="https://fonts.googleapis.com">
+              <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+              <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+              <style>
+                  :root {
+                      --bg-color: #0b0f19;
+                      --card-bg: rgba(17, 24, 39, 0.7);
+                      --border-color: rgba(255, 255, 255, 0.08);
+                      --text-primary: #f3f4f6;
+                      --text-secondary: #9ca3af;
+                      --accent-primary: #6366f1;
+                      --accent-secondary: #a855f7;
+                      --accent-tertiary: #14b8a6;
+                      --glow-color: rgba(99, 102, 241, 0.15);
+                  }
+
+                  * {
+                      margin: 0;
+                      padding: 0;
+                      box-sizing: border-box;
+                  }
+
+                  body {
+                      font-family: 'Plus Jakarta Sans', sans-serif;
+                      background-color: var(--bg-color);
+                      color: var(--text-primary);
+                      min-height: 100vh;
+                      overflow-x: hidden;
+                      display: flex;
+                      flex-direction: column;
+                      position: relative;
+                  }
+
+                  /* Ambient background glows */
+                  body::before {
+                      content: '';
+                      position: absolute;
+                      top: -20%;
+                      left: -10%;
+                      width: 60%;
+                      height: 60%;
+                      background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
+                      z-index: -1;
+                      filter: blur(80px);
+                      pointer-events: none;
+                  }
+
+                  body::after {
+                      content: '';
+                      position: absolute;
+                      bottom: -10%;
+                      right: -10%;
+                      width: 50%;
+                      height: 50%;
+                      background: radial-gradient(circle, rgba(168, 85, 247, 0.1) 0%, transparent 70%);
+                      z-index: -1;
+                      filter: blur(80px);
+                      pointer-events: none;
+                  }
+
+                  header {
+                      padding: 2rem 4rem;
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                      border-bottom: 1px solid var(--border-color);
+                      backdrop-filter: blur(12px);
+                      position: sticky;
+                      top: 0;
+                      z-index: 10;
+                  }
+
+                  .logo {
+                      font-family: 'Space Grotesk', sans-serif;
+                      font-size: 1.5rem;
+                      font-weight: 700;
+                      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+                      -webkit-background-clip: text;
+                      -webkit-text-fill-color: transparent;
+                      display: flex;
+                      align-items: center;
+                      gap: 0.5rem;
+                  }
+
+                  .badge {
+                      background: rgba(20, 184, 166, 0.15);
+                      color: var(--accent-tertiary);
+                      padding: 0.25rem 0.75rem;
+                      border-radius: 9999px;
+                      font-size: 0.75rem;
+                      font-weight: 600;
+                      text-transform: uppercase;
+                      letter-spacing: 0.05em;
+                      border: 1px solid rgba(20, 184, 166, 0.2);
+                      animation: pulse 2s infinite;
+                  }
+
+                  @keyframes pulse {
+                      0%, 100% { opacity: 1; transform: scale(1); }
+                      50% { opacity: 0.8; transform: scale(0.98); }
+                  }
+
+                  main {
+                      flex: 1;
+                      max-width: 1200px;
+                      margin: 0 auto;
+                      padding: 4rem 2rem;
+                      width: 100%;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 3rem;
+                  }
+
+                  .hero {
+                      text-align: center;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 1.5rem;
+                      max-width: 800px;
+                      margin: 0 auto;
+                  }
+
+                  .hero h1 {
+                      font-family: 'Space Grotesk', sans-serif;
+                      font-size: 3.5rem;
+                      line-height: 1.1;
+                      font-weight: 700;
+                      letter-spacing: -0.02em;
+                  }
+
+                  .hero h1 span {
+                      background: linear-gradient(135deg, var(--accent-primary) 30%, var(--accent-secondary) 100%);
+                      -webkit-background-clip: text;
+                      -webkit-text-fill-color: transparent;
+                  }
+
+                  .hero p {
+                      color: var(--text-secondary);
+                      font-size: 1.25rem;
+                      line-height: 1.6;
+                  }
+
+                  /* Pipeline Visualizer */
+                  .pipeline-container {
+                      background: var(--card-bg);
+                      border: 1px solid var(--border-color);
+                      border-radius: 20px;
+                      padding: 2.5rem;
+                      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+                      backdrop-filter: blur(16px);
+                      position: relative;
+                      overflow: hidden;
+                  }
+
+                  .pipeline-container::before {
+                      content: '';
+                      position: absolute;
+                      top: 0;
+                      left: 0;
+                      width: 100%;
+                      height: 2px;
+                      background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), var(--accent-tertiary));
+                  }
+
+                  .pipeline-title {
+                      font-family: 'Space Grotesk', sans-serif;
+                      font-size: 1.25rem;
+                      margin-bottom: 2rem;
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                  }
+
+                  .pipeline-steps {
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                      position: relative;
+                      margin: 2rem 0;
+                  }
+
+                  /* Line connecting steps */
+                  .pipeline-steps::before {
+                      content: '';
+                      position: absolute;
+                      top: 50%;
+                      left: 5%;
+                      right: 5%;
+                      height: 3px;
+                      background: rgba(255, 255, 255, 0.1);
+                      z-index: 1;
+                      transform: translateY(-50%);
+                  }
+
+                  .pipeline-progress-line {
+                      position: absolute;
+                      top: 50%;
+                      left: 5%;
+                      width: 0%;
+                      height: 3px;
+                      background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+                      z-index: 2;
+                      transform: translateY(-50%);
+                      transition: width 3s ease-out;
+                  }
+
+                  .step {
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                      gap: 0.75rem;
+                      position: relative;
+                      z-index: 3;
+                      width: 120px;
+                  }
+
+                  .step-icon {
+                      width: 50px;
+                      height: 50px;
+                      border-radius: 50%;
+                      background: #111827;
+                      border: 2px solid rgba(255, 255, 255, 0.1);
+                      display: flex;
+                      justify-content: center;
+                      align-items: center;
+                      font-weight: 700;
+                      color: var(--text-secondary);
+                      transition: all 0.4s ease;
+                  }
+
+                  .step.active .step-icon {
+                      border-color: var(--accent-primary);
+                      box-shadow: 0 0 15px var(--glow-color);
+                      color: var(--accent-primary);
+                      background: rgba(99, 102, 241, 0.1);
+                  }
+
+                  .step.completed .step-icon {
+                      border-color: var(--accent-tertiary);
+                      color: var(--accent-tertiary);
+                      background: rgba(20, 184, 166, 0.1);
+                  }
+
+                  .step-label {
+                      font-size: 0.875rem;
+                      font-weight: 600;
+                      color: var(--text-secondary);
+                      text-align: center;
+                      transition: color 0.4s ease;
+                  }
+
+                  .step.active .step-label {
+                      color: var(--text-primary);
+                  }
+
+                  .step.completed .step-label {
+                      color: var(--accent-tertiary);
+                  }
+
+                  /* Stats grid */
+                  .stats-grid {
+                      display: grid;
+                      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                      gap: 1.5rem;
+                  }
+
+                  .stat-card {
+                      background: var(--card-bg);
+                      border: 1px solid var(--border-color);
+                      border-radius: 16px;
+                      padding: 1.5rem;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 1rem;
+                      transition: all 0.3s ease;
+                  }
+
+                  .stat-card:hover {
+                      transform: translateY(-4px);
+                      border-color: rgba(99, 102, 241, 0.25);
+                      box-shadow: 0 12px 24px -10px rgba(99, 102, 241, 0.15);
+                  }
+
+                  .stat-header {
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                      color: var(--text-secondary);
+                      font-size: 0.875rem;
+                      font-weight: 500;
+                  }
+
+                  .stat-value {
+                      font-size: 1.75rem;
+                      font-weight: 700;
+                      font-family: 'Space Grotesk', sans-serif;
+                  }
+
+                  .stat-footer {
+                      font-size: 0.75rem;
+                      color: var(--accent-tertiary);
+                      display: flex;
+                      align-items: center;
+                      gap: 0.25rem;
+                  }
+
+                  /* Action Section */
+                  .actions-section {
+                      display: flex;
+                      justify-content: center;
+                      gap: 1rem;
+                      margin-top: 1rem;
+                  }
+
+                  .btn {
+                      padding: 0.75rem 1.5rem;
+                      border-radius: 10px;
+                      font-size: 0.875rem;
+                      font-weight: 600;
+                      cursor: pointer;
+                      transition: all 0.3s ease;
+                      text-decoration: none;
+                      display: inline-flex;
+                      align-items: center;
+                      gap: 0.5rem;
+                  }
+
+                  .btn-primary {
+                      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+                      color: #fff;
+                      border: none;
+                      box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.4);
+                  }
+
+                  .btn-primary:hover {
+                      transform: translateY(-2px);
+                      box-shadow: 0 6px 20px 0 rgba(99, 102, 241, 0.6);
+                  }
+
+                  .btn-secondary {
+                      background: rgba(255, 255, 255, 0.05);
+                      color: var(--text-primary);
+                      border: 1px solid var(--border-color);
+                  }
+
+                  .btn-secondary:hover {
+                      background: rgba(255, 255, 255, 0.1);
+                      border-color: rgba(255, 255, 255, 0.2);
+                      transform: translateY(-2px);
+                  }
+
+                  footer {
+                      padding: 2rem;
+                      text-align: center;
+                      color: var(--text-secondary);
+                      font-size: 0.875rem;
+                      border-top: 1px solid var(--border-color);
+                      margin-top: auto;
+                  }
+
+                  /* Responsive styling */
+                  @media (max-width: 768px) {
+                      header {
+                          padding: 1.5rem;
+                      }
+                      .hero h1 {
+                          font-size: 2.5rem;
+                      }
+                      .pipeline-steps {
+                          flex-direction: column;
+                          gap: 2rem;
+                          align-items: flex-start;
+                          padding-left: 2rem;
+                      }
+                      .pipeline-steps::before {
+                          left: calc(2rem + 25px);
+                          top: 5%;
+                          bottom: 5%;
+                          width: 3px;
+                          height: 90%;
+                      }
+                      .pipeline-progress-line {
+                          left: calc(2rem + 25px);
+                          top: 5%;
+                          width: 3px;
+                          height: 0%;
+                          transition: height 3s ease-out;
+                      }
+                      .step {
+                          flex-direction: row;
+                          width: 100%;
+                          gap: 1.5rem;
+                      }
+                  }
+              </style>
+          </head>
+          <body>
+              <header>
+                  <div class="logo">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M2 17L12 22L22 17" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M2 12L12 17L22 12" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <defs>
+                              <linearGradient id="logoGrad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                                  <stop stop-color="#6366f1"/>
+                                  <stop offset="1" stop-color="#a855f7"/>
+                              </linearGradient>
+                          </defs>
+                      </svg>
+                      GitOps Cloud Portal
+                  </div>
+                  <div class="badge">Active & Secure</div>
+              </header>
+
+              <main>
+                  <section class="hero">
+                      <h1>Infrastructure Provisioned Via <span>GitOps Pipeline</span></h1>
+                      <p>Your AWS Cloud environment has been successfully orchestrated using Terraform for resource provisioning and Ansible for configuration management.</p>
+                  </section>
+
+                  <!-- Dynamic Pipeline Section -->
+                  <section class="pipeline-container">
+                      <div class="pipeline-title">
+                          <span>Pipeline Deployment Status</span>
+                          <span style="color: var(--accent-tertiary); font-weight: 600;" id="pipeline-status-text">Completed</span>
+                      </div>
+                      
+                      <div class="pipeline-steps">
+                          <div class="pipeline-progress-line" id="progress-line"></div>
+                          
+                          <div class="step completed" id="step-1">
+                              <div class="step-icon">1</div>
+                              <div class="step-label">Git Push</div>
+                          </div>
+                          <div class="step completed" id="step-2">
+                              <div class="step-icon">2</div>
+                              <div class="step-label">GitHub Actions</div>
+                          </div>
+                          <div class="step completed" id="step-3">
+                              <div class="step-icon">3</div>
+                              <div class="step-label">Terraform Plan</div>
+                          </div>
+                          <div class="step completed" id="step-4">
+                              <div class="step-icon">4</div>
+                              <div class="step-label">AWS Provision</div>
+                          </div>
+                          <div class="step completed" id="step-5">
+                              <div class="step-icon">5</div>
+                              <div class="step-label">Ansible Config</div>
+                          </div>
+                      </div>
+                  </section>
+
+                  <!-- Stats Grid -->
+                  <section class="stats-grid">
+                      <div class="stat-card">
+                          <div class="stat-header">
+                              <span>Target Provider</span>
+                              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                          </div>
+                          <div class="stat-value">AWS VPC</div>
+                          <div class="stat-footer">Secure Private Cloud</div>
+                      </div>
+
+                      <div class="stat-card">
+                          <div class="stat-header">
+                              <span>Web Server Engine</span>
+                              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+                          </div>
+                          <div class="stat-value">Nginx v1.18+</div>
+                          <div class="stat-footer">Ubuntu 22.04 LTS</div>
+                      </div>
+
+                      <div class="stat-card">
+                          <div class="stat-header">
+                              <span>Orchestration Status</span>
+                              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                          </div>
+                          <div class="stat-value" style="color: var(--accent-tertiary);">Configured</div>
+                          <div class="stat-footer">Continuous Delivery Active</div>
+                      </div>
+                  </section>
+
+                  <!-- Actions -->
+                  <section class="actions-section">
+                      <a href="https://github.com" target="_blank" class="btn btn-primary">
+                          View GitHub Repo
+                      </a>
+                      <button onclick="simulatePipeline()" class="btn btn-secondary">
+                          Rerun Simulation
+                      </button>
+                  </section>
+              </main>
+
+              <footer>
+                  <p>&copy; 2026 GitOps Cloud Orchestration Pipeline. Managed by Terraform & Ansible.</p>
+              </footer>
+
+              <script>
+                  // Simulate pipeline progression
+                  function simulatePipeline() {
+                      const steps = [
+                          document.getElementById('step-1'),
+                          document.getElementById('step-2'),
+                          document.getElementById('step-3'),
+                          document.getElementById('step-4'),
+                          document.getElementById('step-5')
+                      ];
+                      const progressLine = document.getElementById('progress-line');
+                      const statusText = document.getElementById('pipeline-status-text');
+                      const isVertical = window.innerWidth <= 768;
+
+                      // Reset
+                      statusText.innerText = 'Initializing...';
+                      statusText.style.color = 'var(--text-secondary)';
+                      steps.forEach(step => {
+                          step.classList.remove('completed', 'active');
+                      });
+                      if (isVertical) {
+                          progressLine.style.height = '0%';
+                      } else {
+                          progressLine.style.width = '0%';
+                      }
+
+                      // Progression logic
+                      let currentStep = 0;
+                      
+                      function nextStep() {
+                          if (currentStep < steps.length) {
+                              steps[currentStep].classList.add('active');
+                              statusText.innerText = `Running ${steps[currentStep].querySelector('.step-label').innerText}...`;
+                              statusText.style.color = 'var(--accent-primary)';
+
+                              setTimeout(() => {
+                                  steps[currentStep].classList.remove('active');
+                                  steps[currentStep].classList.add('completed');
+                                  
+                                  currentStep++;
+                                  const percent = (currentStep / (steps.length - 1)) * 90;
+                                  if (isVertical) {
+                                      progressLine.style.height = `${percent}%`;
+                                  } else {
+                                      progressLine.style.width = `${percent}%`;
+                                  }
+                                  
+                                  setTimeout(nextStep, 1000);
+                              }, 1500);
+                          } else {
+                              statusText.innerText = 'Completed Successfully';
+                              statusText.style.color = 'var(--accent-tertiary)';
+                          }
+                      }
+
+                      setTimeout(nextStep, 500);
+                  }
+
+                  // Run animation on load
+                  window.addEventListener('DOMContentLoaded', () => {
+                      const isVertical = window.innerWidth <= 768;
+                      const progressLine = document.getElementById('progress-line');
+                      if (isVertical) {
+                          progressLine.style.height = '90%';
+                      } else {
+                          progressLine.style.width = '90%';
+                      }
+                  });
+              </script>
+          </body>
+          </html>
