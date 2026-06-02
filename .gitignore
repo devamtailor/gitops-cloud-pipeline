@@ -23,3 +23,6 @@ Thumbs.db
 
 # PDF documentation generation script
 generate_pdf.py
+
+# Local screenshots folder
+screenshots/
