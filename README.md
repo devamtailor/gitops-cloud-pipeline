@@ -68,7 +68,9 @@ If you prefer to run the orchestration manually from your local command line, fo
 * [Terraform CLI](https://developer.hashicorp.com/terraform/downloads) (>= 1.0.0)
 * [Ansible CLI](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
 * AWS Credentials configured (`aws configure`)
-* SSH Keypair created in AWS (default name: `gitops-deployer-key`)
+* SSH Keypair created in AWS (default name: `gitops-deployer-key`) and private key saved as `~/.ssh/gitops-deployer-key.pem`
+* **Terraform Remote State Bucket**: The project is configured to use AWS S3 for remote state backend (`devamtailor-gitops-tfstate` in `us-east-1`).
+  * *Note*: If you want to deploy this locally without creating the remote S3 bucket, comment out the `backend "s3" { ... }` block in [main.tf](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/gitops-cloud-pipeline/terraform/main.tf) (lines 10-16) to use a local state file.
 
 ### Step 1: Provision Infrastructure with Terraform
 Navigate to the `terraform/` directory:
@@ -128,6 +130,28 @@ To implement the fully automated pipeline:
    git push -u origin main
    ```
 4. GitHub Actions will trigger automatically, provision your server, and run the configuration playbook.
+
+---
+
+## 📸 Recommended Screenshots for Documentation
+
+To document this project successfully (e.g., for a presentation, report, or portfolio), capture the following screenshots:
+
+1. **GitHub Actions Pipeline execution**:
+   * **What**: The run details page of the **GitOps Infrastructure Deployment** workflow, showing a green checkmark next to all jobs/steps.
+   * **Why**: Demonstrates CI/CD automation and pipeline completion.
+2. **AWS Management Console (EC2 Instance)**:
+   * **What**: The AWS EC2 instances dashboard showing your `production-nginx-server` running with its public IPv4 address.
+   * **Why**: Verifies that Terraform successfully provisioned resources in AWS.
+3. **Ansible Playbook Run**:
+   * **What**: Terminal output (local or in the GitHub Actions runner logs) showing the Ansible tasks executing successfully with zero failures (all green/orange).
+   * **Why**: Confirms Nginx installation and landing page configuration.
+4. **Live GitOps Cloud Portal**:
+   * **What**: A browser tab loaded at `http://<YOUR_EC2_PUBLIC_IP>` showing the custom styled dashboard with the interactive "Pipeline Deployment Status" showing **Completed Successfully**.
+   * **Why**: Visually showcases the end result of the deployment.
+5. **AWS S3 State Storage (Optional)**:
+   * **What**: The S3 bucket file hierarchy showing the `state/terraform.tfstate` file.
+   * **Why**: Proves remote state isolation.
 
 ---
 
