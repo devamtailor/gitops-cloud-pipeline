@@ -20,3 +20,6 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+
+# PDF documentation generation script
+generate_pdf.py
